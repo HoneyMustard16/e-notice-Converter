@@ -52,13 +52,43 @@ def convert_excel_to_text(excel_file, output_file):
                     output_lines.append(f"{col}={str(antenna_row.iloc[0][col])}")
 
             # Now include RX STATION inside ANTENNA
-            rx_station_row = rx_station_df[rx_station_df["t_adm_ref_id"] == adm_ref_id]
-            if not rx_station_row.empty:
-                output_lines.append("<RX_STATION>")
-                for col in rx_station_row.columns:
-                    if col != "t_adm_ref_id":
-                        output_lines.append(f"{col}={str(rx_station_row.iloc[0][col])}")
-                output_lines.append("</RX_STATION>")
+            rx_station_rows = rx_station_df[rx_station_df["t_adm_ref_id"] == adm_ref_id]
+
+            if not rx_station_rows.empty:
+                # Check if any row has t_geo_type == "MULTIPOINT"
+                if (rx_station_rows["t_geo_type"].str.upper() == "MULTIPOINT").any():
+                    output_lines.append("<RX_STATION>")
+                    output_lines.append("t_geo_type=MULTIPOINT")
+                    # For each point (row), output a POINT block with t_lat and t_long
+                    multipoint_rows = rx_station_rows[
+                        rx_station_rows["t_geo_type"].str.upper() == "MULTIPOINT"
+                    ]
+                    for _, point_row in multipoint_rows.iterrows():
+                        output_lines.append("<POINT>")
+                        output_lines.append(f"t_lat={point_row['t_lat']}")
+                        output_lines.append(f"t_long={point_row['t_long']}")
+                        output_lines.append("</POINT>")
+                    output_lines.append("</RX_STATION>")
+                else:
+                    output_lines.append("<RX_STATION>")
+                    # Get the first row since we output only one RX_STATION block
+                    rx_row = rx_station_rows.iloc[0]
+                    t_geo_type = str(rx_row.get("t_geo_type", "")).upper()
+
+                    for col in rx_station_rows.columns:
+                        if col == "t_adm_ref_id":
+                            continue
+                        # Skip columns based on t_geo_type
+                        if t_geo_type == "ZONE" and col in [
+                            "t_lat",
+                            "t_long",
+                            "t_radius",
+                        ]:
+                            continue
+                        if t_geo_type == "CIRCLE" and col == "t_zone_id":
+                            continue
+                        output_lines.append(f"{col}={str(rx_row[col])}")
+                    output_lines.append("</RX_STATION>")
             output_lines.append("</ANTENNA>")
         output_lines.append("</NOTICE>")
 
@@ -77,9 +107,3 @@ def convert_excel_to_text(excel_file, output_file):
     with open(output_file, "w") as f:
         for line in output_lines:
             f.write(f"{line}\n")
-
-
-# Example usage
-convert_excel_to_text(
-    "T12 DataFace 401 - 600.xlsx", "T12 e-notice 401 - 600 HF Pemerintah.txt"
-)
