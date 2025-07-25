@@ -87,6 +87,12 @@ def convert_excel_to_text(excel_file, output_file):
                             continue
                         if t_geo_type == "CIRCLE" and col == "t_zone_id":
                             continue
+                        if t_geo_type == "POINT" and col in [
+                            "t_ctry",
+                            "t_site_name",
+                            "t_noise_temp",
+                        ]:
+                            continue
                         output_lines.append(f"{col}={str(rx_row[col])}")
                     output_lines.append("</RX_STATION>")
             output_lines.append("</ANTENNA>")
