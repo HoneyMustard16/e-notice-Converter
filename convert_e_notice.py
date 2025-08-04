@@ -27,14 +27,16 @@ def convert_excel_to_text(excel_file, output_file):
         output_lines.append("<NOTICE>")
         for col in notice_df.columns:
             if "t_long" in col.lower():
-                # Use the value directly, preserving sign and leading zeros
+                # Convert to string and handle NaN/None values
+                value = str(notice_row[col]) if pd.notna(notice_row[col]) else ""
                 output_lines.append(
-                    f"{col}={notice_row[col].zfill(7)}"
+                    f"{col}={value.zfill(7)}"
                 )  # Ensure it has leading zeros
             elif "t_lat" in col.lower():
-                # Use the value directly, preserving sign and leading zeros
+                # Convert to string and handle NaN/None values
+                value = str(notice_row[col]) if pd.notna(notice_row[col]) else ""
                 output_lines.append(
-                    f"{col}={notice_row[col].zfill(6)}"
+                    f"{col}={value.zfill(6)}"
                 )  # Ensure it has leading zeros
             else:
                 output_lines.append(
@@ -65,8 +67,18 @@ def convert_excel_to_text(excel_file, output_file):
                     ]
                     for _, point_row in multipoint_rows.iterrows():
                         output_lines.append("<POINT>")
-                        output_lines.append(f"t_lat={point_row['t_lat']}")
-                        output_lines.append(f"t_long={point_row['t_long']}")
+                        t_lat = (
+                            str(point_row["t_lat"])
+                            if pd.notna(point_row["t_lat"])
+                            else ""
+                        )
+                        t_long = (
+                            str(point_row["t_long"])
+                            if pd.notna(point_row["t_long"])
+                            else ""
+                        )
+                        output_lines.append(f"t_lat={t_lat}")
+                        output_lines.append(f"t_long={t_long}")
                         output_lines.append("</POINT>")
                     output_lines.append("</RX_STATION>")
                 else:
