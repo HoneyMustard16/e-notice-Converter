@@ -6,7 +6,7 @@ from convert_e_notice import convert_excel_to_text
 class ConverterGUI(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("e-notice converter")
+        self.title("Simple e-notice converter v.1 - Ihsan Dwicahyo")
         self.geometry("450x200")
 
         self.input_path = tk.StringVar()
